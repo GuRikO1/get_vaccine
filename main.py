@@ -1,5 +1,6 @@
 import os
 import logging
+import argparse
 import time
 from datetime import datetime, timedelta, timezone
 import requests
@@ -7,6 +8,7 @@ from bs4 import BeautifulSoup
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.keys import Keys
 import slackweb
+
 
 
 logger = logging.getLogger(__name__)
@@ -31,7 +33,8 @@ def send_to_slack(text):
     slack.notify(text=text)
 
 
-def main():
+def main(args):
+    prev_datetime = datetime.now(JST) - timedelta(seconds=args.slack_int)
     while True:
         logger.info(f'INFO: [{datetime.now(JST)}] Start watching website {url}')
         send_flag = False
@@ -65,14 +68,20 @@ def main():
                 note = f'* {res_frame}: 予約が満杯です'
                 logger.info(note)
 
-        if send_flag:
-            logger.info(f'INFO: [{datetime.now(JST)}] Send below message to slack')
+        send_datetime = datetime.now(JST)
+        if send_flag and (send_datetime - prev_datetime).seconds >= args.slack_int:
+            logger.info(f'INFO: [{send_datetime}] Send below message to slack')
             logger.info(send_text)
             send_to_slack(send_text)
+            prev_datetime = send_datetime
         
         logger.info(f'INFO: [{datetime.now(JST)}] Stop watching website')
-        time.sleep(300)
+        time.sleep(args.watch_int)
  
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-w', '--watch_int', default=60)
+    parser.add_argument('-s', '--slack_int', default=300)
+    args = parser.parse_args()
+    main(args)
