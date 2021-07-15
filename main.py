@@ -10,7 +10,6 @@ from selenium.webdriver.common.keys import Keys
 import slackweb
 
 
-
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
@@ -40,7 +39,7 @@ def main(args):
         send_flag = False
         send_text = f'予約TOP: {url}\n\n'
         driver.get(url)
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(60)
         preserve_links = driver.find_elements_by_partial_link_text("午")
         
         logger.info(f'INFO: [{datetime.now(JST)}] Get reservation info')
@@ -55,12 +54,12 @@ def main(args):
 
             res_frame = date + ' ' + a.text
             if not alert:
-                note = f'* {res_frame}: 予約が可能です\n\t{url}: {day_url}'
+                note = f'* {res_frame}: 予約が可能です\n\turl: {day_url}'
                 send_text += note + '\n'
                 logger.info(note)
                 send_flag = True
             elif '満杯' not in alert.get_text():
-                note = f'* {res_frame}: 予約が可能です\n\t{url}: {day_url}'
+                note = f'* {res_frame}: 予約が可能です\n\turl: {day_url}'
                 send_text += note + '\n'
                 logger.info(note)
                 send_flag = True
@@ -81,7 +80,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-w', '--watch_int', default=60)
-    parser.add_argument('-s', '--slack_int', default=300)
+    parser.add_argument('-w', '--watch_int', type=int, default=60)
+    parser.add_argument('-s', '--slack_int', type=int, default=300)
     args = parser.parse_args()
     main(args)
